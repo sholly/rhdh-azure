@@ -50,6 +50,23 @@ auth:
 #   User.Read.All, GroupMember.Read.All (admin consent granted)
 # ---------------------------------------------------------------------------
 catalog:
+  # Which entity kinds may be registered from a location. RHDH's bundled
+  # app-config.example.yaml is part of the merged config and sets this to
+  # [Component, System, Group, Resource, Location, Template, API] -- omitting
+  # Domain and User. Pinned explicitly here so registrations do not depend on
+  # a file that ships with the image.
+  rules:
+    - allow:
+        - Component
+        - System
+        - Domain
+        - Resource
+        - Location
+        - Template
+        - API
+        - Group
+        - User
+
   providers:
     microsoftGraphOrg:
       providerId:
