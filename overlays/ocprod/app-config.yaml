@@ -52,7 +52,7 @@ auth:
 catalog:
   providers:
     microsoftGraphOrg:
-      default:
+      providerId:
         target: https://graph.microsoft.com/v1.0
         authority: https://login.microsoftonline.com
         tenantId: ${AZURE_TENANT_ID}
