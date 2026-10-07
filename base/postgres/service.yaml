@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rhdh-postgres
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  selector:
+    app.kubernetes.io/name: rhdh-postgres
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+---
+# Headless service used as the StatefulSet's governing service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rhdh-postgres-hl
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/name: rhdh-postgres
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql

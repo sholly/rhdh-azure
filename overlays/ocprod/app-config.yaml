@@ -1,0 +1,73 @@
+app:
+  title: Red Hat Developer Hub
+  baseUrl: https://rhdhazure.apps.ocprod.303.tube
+
+backend:
+  baseUrl: https://rhdhazure.apps.ocprod.303.tube
+  cors:
+    origin: https://rhdhazure.apps.ocprod.303.tube
+  auth:
+    externalAccess:
+      - type: legacy
+        options:
+          subject: legacy-default-config
+          secret: ${BACKEND_SECRET}
+  # Dedicated PostgreSQL (base/postgres). Values come from rhdh-postgres-secret.
+  database:
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+
+# ---------------------------------------------------------------------------
+# Microsoft Entra ID sign-in
+# Redirect URI to register on the Entra app registration:
+#   https://rhdhazure.apps.ocprod.303.tube/api/auth/microsoft/handler/frame
+# ---------------------------------------------------------------------------
+signInPage: microsoft
+
+auth:
+  environment: production
+  providers:
+    microsoft:
+      production:
+        clientId: ${AZURE_CLIENT_ID}
+        clientSecret: ${AZURE_CLIENT_SECRET}
+        tenantId: ${AZURE_TENANT_ID}
+        domainHint: ${AZURE_TENANT_ID}
+        signIn:
+          resolvers:
+            # Tried in order until one matches a User entity from MS Graph.
+            - resolver: userIdMatchingUserEntityAnnotation
+            - resolver: emailMatchingUserEntityProfileEmail
+            - resolver: emailLocalPartMatchingUserEntityName
+
+# ---------------------------------------------------------------------------
+# Entra ID users & groups -> catalog (msgraph dynamic plugin)
+# Requires Application permissions on the same app registration:
+#   User.Read.All, GroupMember.Read.All (admin consent granted)
+# ---------------------------------------------------------------------------
+catalog:
+  providers:
+    microsoftGraphOrg:
+      default:
+        target: https://graph.microsoft.com/v1.0
+        authority: https://login.microsoftonline.com
+        tenantId: ${AZURE_TENANT_ID}
+        clientId: ${AZURE_CLIENT_ID}
+        clientSecret: ${AZURE_CLIENT_SECRET}
+        user:
+          filter: accountEnabled eq true and userType eq 'Member'
+        group:
+          # Narrow this for large tenants, e.g.
+          # filter: securityEnabled eq true and startswith(displayName,'dev-')
+          filter: securityEnabled eq true
+        schedule:
+          frequency:
+            minutes: 60
+          initialDelay:
+            seconds: 15
+          timeout:
+            minutes: 15

@@ -1,0 +1,9 @@
+includes:
+  - dynamic-plugins.default.yaml
+
+plugins:
+  # Imports Entra ID users and groups into the catalog so that signed-in
+  # users resolve to a User entity (required for sign-in and RBAC).
+  # Connection settings live in app-config (catalog.providers.microsoftGraphOrg).
+  - package: ./dynamic-plugins/dist/backstage-plugin-catalog-backend-module-msgraph-dynamic
+    disabled: false

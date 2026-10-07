@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Apply once to bootstrap (oc apply -k argocd/), or point an app-of-apps here.
+# Assumes the Red Hat Developer Hub Operator is already installed on the cluster.
+resources:
+  - rhdh-azure.application.yaml

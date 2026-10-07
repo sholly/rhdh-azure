@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Environment-agnostic pieces: dedicated PostgreSQL + the Backstage CR.
+# Hostname, app-config and namespace are set by the overlay.
+resources:
+  - postgres/service.yaml
+  - postgres/statefulset.yaml
+  - rhdh/backstage.yaml
+
+configMapGenerator:
+  - name: rhdh-dynamic-plugins
+    files:
+      - dynamic-plugins.yaml=rhdh/dynamic-plugins.yaml
+
+generatorOptions:
+  # The Backstage CR references ConfigMaps by fixed name. The operator watches
+  # them and restarts the pod on change, so a hash suffix is not needed.
+  disableNameSuffixHash: true
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: rhdh-azure
+    includeSelectors: false

@@ -1,0 +1,4 @@
+# Real secret material must never be committed
+overlays/*/secrets/*.yaml
+!overlays/*/secrets/*.example.yaml
+!overlays/*/secrets/*.sealed.yaml

@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rhdh-azure
+
+resources:
+  - namespace.yaml
+  - ../../base
+  # Secrets are NOT committed in plain text. Create them out-of-band
+  # (see README), or commit SealedSecret/ExternalSecret manifests and list them here:
+  # - secrets/rhdh-azure-secrets.sealed.yaml
+  # - secrets/rhdh-postgres-secret.sealed.yaml
+
+configMapGenerator:
+  - name: rhdh-app-config
+    files:
+      - app-config.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+patches:
+  # Public hostname for this instance
+  - target:
+      group: rhdh.redhat.com
+      kind: Backstage
+      name: developer-hub
+    patch: |-
+      - op: replace
+        path: /spec/application/route/host
+        value: rhdhazure.apps.ocprod.303.tube
