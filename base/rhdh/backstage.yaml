@@ -1,7 +1,7 @@
 apiVersion: rhdh.redhat.com/v1alpha4
 kind: Backstage
 metadata:
-  name: developer-hub
+  name: developer-hub-azure
   annotations:
     # Sync after PostgreSQL is in place.
     argocd.argoproj.io/sync-wave: "2"
