@@ -7,3 +7,9 @@ plugins:
   # Connection settings live in app-config (catalog.providers.microsoftGraphOrg).
   - package: ./dynamic-plugins/dist/backstage-plugin-catalog-backend-module-msgraph-dynamic
     disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-azure
+    disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-azure-devops
+    disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-azure-devops-backend
+    disabled: false
