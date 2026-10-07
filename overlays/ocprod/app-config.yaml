@@ -66,7 +66,7 @@ catalog:
           filter: securityEnabled eq true
         schedule:
           frequency:
-            minutes: 60
+            minutes: 15
           initialDelay:
             seconds: 15
           timeout:
