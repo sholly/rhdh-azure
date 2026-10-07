@@ -21,7 +21,7 @@ plugins:
     disabled: false
 
   # Scaffolder action: publish:azure (used by the dotnet-api-azure-devops template)
-  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-plugin-scaffolder-backend-module-azure:bs_1.49.4__0.2.19!backstage-plugin-scaffolder-backend-module-azure-dynamic
+  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-plugin-scaffolder-backend-module-azure:bs_1.49.4__0.2.19!backstage-plugin-scaffolder-backend-module-azure
     disabled: false
 
   # Azure DevOps backend (pipelines, pull requests, README data for the frontend)
