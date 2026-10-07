@@ -20,7 +20,7 @@ spec:
         - name: rhdh-postgres-secret
     route:
       enabled: true
-      host: rhdh.example.com # replaced by the overlay
+      host: rhdhazure.apps.ocprod.303.tube # replaced by the overlay
       # Operator creates an edge-terminated Route using the cluster's default
       # ingress certificate. To use your own cert, set
       # tls.externalCertificateSecretName (or tls.certificate/key).
