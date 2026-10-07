@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<your-org>/<your-repo>.git # CHANGE ME
+    repoURL: https://github.com/sholly/rhdh-azure.git
     targetRevision: main
     path: overlays/ocprod
   destination:
