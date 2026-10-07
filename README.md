@@ -59,7 +59,10 @@ oc -n rhdh-azure create secret generic rhdh-azure-secrets \
   --from-literal=BACKEND_SECRET="$(openssl rand -base64 32)" \
   --from-literal=AZURE_TENANT_ID=<tenant-id> \
   --from-literal=AZURE_CLIENT_ID=<client-id> \
-  --from-literal=AZURE_CLIENT_SECRET=<client-secret>
+  --from-literal=AZURE_CLIENT_SECRET=<client-secret> \
+  --from-literal=AZURE_DEVOPS_CLIENT_ID=<devops-sp-client-id> \
+  --from-literal=AZURE_DEVOPS_CLIENT_SECRET=<devops-sp-client-secret> \
+  --from-literal=AZURE_DEVOPS_ORG=<devops-org-name>
 
 oc -n rhdh-azure create secret generic rhdh-postgres-secret \
   --from-literal=POSTGRES_HOST=rhdh-postgres \

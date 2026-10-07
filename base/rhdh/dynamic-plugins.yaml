@@ -7,9 +7,48 @@ plugins:
   # Connection settings live in app-config (catalog.providers.microsoftGraphOrg).
   - package: ./dynamic-plugins/dist/backstage-plugin-catalog-backend-module-msgraph-dynamic
     disabled: false
-  - package: '@backstage-community/plugin-scaffolder-backend-module-azure-devops'
+
+  # ---------------------------------------------------------------------------
+  # Azure DevOps
+  # Plain npm package names (e.g. @backstage-community/plugin-azure-devops) do
+  # not work here: they are not dynamic-plugin builds and the installer rejects
+  # them without an integrity hash. Use the OCI artifacts that RHDH's plugin
+  # catalog index lists for this release (Backstage 1.49.4).
+  # ---------------------------------------------------------------------------
+
+  # Scaffolder actions: azure:pipeline:create / permit / run
+  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-scaffolder-backend-module-azure-devops:bs_1.49.4__0.23.0!backstage-community-plugin-scaffolder-backend-module-azure-devops
     disabled: false
-  - package: '@backstage-community/plugin-azure-devops'
+
+  # Scaffolder action: publish:azure (used by the dotnet-api-azure-devops template)
+  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-plugin-scaffolder-backend-module-azure:bs_1.49.4__0.2.19!backstage-plugin-scaffolder-backend-module-azure-dynamic
     disabled: false
-  - package: '@backstage-community/plugin-azure-devops-backend'
+
+  # Azure DevOps backend (pipelines, pull requests, README data for the frontend)
+  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-azure-devops-backend:bs_1.49.4__0.27.0!backstage-community-plugin-azure-devops-backend
     disabled: false
+
+  # Azure DevOps frontend: CI and Pull Requests tabs on entity pages
+  - package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-azure-devops:bs_1.49.4__0.29.0!backstage-community-plugin-azure-devops
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          backstage-community.plugin-azure-devops:
+            mountPoints:
+              - mountPoint: entity.page.ci/cards
+                importName: EntityAzurePipelinesContent
+                config:
+                  layout:
+                    gridColumn: 1 / -1
+                  if:
+                    allOf:
+                      - isAzureDevOpsAvailable
+              - mountPoint: entity.page.pull-requests/cards
+                importName: EntityAzurePullRequestsContent
+                config:
+                  layout:
+                    gridColumn: 1 / -1
+                  if:
+                    allOf:
+                      - isAzureDevOpsAvailable

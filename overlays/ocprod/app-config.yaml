@@ -71,3 +71,24 @@ catalog:
             seconds: 15
           timeout:
             minutes: 15
+
+# ---------------------------------------------------------------------------
+# Azure DevOps (service principal auth)
+# Used by the Azure DevOps frontend/backend plugins and the scaffolder actions
+# publish:azure and azure:pipeline:*. Backstage gets Entra ID tokens for the
+# service principal itself; no PAT is needed.
+# The service principal must be added as a user (Basic access) in the Azure
+# DevOps organization and granted Contributors + Build Administrators on the
+# target project(s).
+# ---------------------------------------------------------------------------
+integrations:
+  azure:
+    - host: dev.azure.com
+      credentials:
+        - clientId: ${AZURE_DEVOPS_CLIENT_ID}
+          clientSecret: ${AZURE_DEVOPS_CLIENT_SECRET}
+          tenantId: ${AZURE_TENANT_ID}
+
+azureDevOps:
+  host: dev.azure.com
+  organization: ${AZURE_DEVOPS_ORG}
