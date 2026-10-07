@@ -9,7 +9,7 @@ plugins:
     disabled: false
   - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-azure
     disabled: false
-  - package: ./dynamic-plugins/dist/backstage-plugin-azure-devops
+  - package: '@backstage-community/plugin-azure-devops'
     disabled: false
-  - package: ./dynamic-plugins/dist/backstage-plugin-azure-devops-backend
+  - package: '@backstage-community/plugin-azure-devops-backend'
     disabled: false
