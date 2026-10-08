@@ -1,0 +1,117 @@
+# Identity the Developer Hub pod runs as, so that the Kubernetes plugin can
+# talk to the cluster it is hosted on.
+#
+# The plugin is configured with authProvider: serviceAccount and no
+# serviceAccountToken (see app-config.yaml). In that mode the backend reads the
+# projected token from /var/run/secrets/kubernetes.io/serviceaccount/token on
+# every request and discovers the API server and its CA from the pod
+# environment -- so there is no token to create, mount or rotate by hand.
+#
+# The Backstage CR patches the Deployment to use this ServiceAccount and to set
+# automountServiceAccountToken: true (the operator leaves it false by default).
+#
+# Read-only, cluster-wide: the multiTenant service locator looks up resources in
+# every namespace by the backstage.io/kubernetes-id label.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rhdh-kubernetes
+  annotations:
+    # Must exist before the Backstage CR (wave 2) starts a pod that uses it.
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # Cluster-scoped: a second Developer Hub instance on the same cluster must
+  # either reuse this ClusterRole or use a different name.
+  name: rhdh-kubernetes-reader
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+rules:
+  # kubernetes.objectTypes defaults to the full set; these cover it.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/log
+      - services
+      - configmaps
+      - limitranges
+      - resourcequotas
+      - events
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  # OpenShift Routes, shown next to Ingresses on the Kubernetes tab.
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - get
+      - list
+      - watch
+  # CPU/memory figures. Drop this rule if you set skipMetricsLookup: true.
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rhdh-kubernetes-reader
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rhdh-kubernetes-reader
+subjects:
+  - kind: ServiceAccount
+    name: rhdh-kubernetes
+    namespace: rhdh-azure # rewritten by the overlay's namespace setting

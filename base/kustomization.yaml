@@ -6,6 +6,7 @@ kind: Kustomization
 resources:
   - postgres/service.yaml
   - postgres/statefulset.yaml
+  - rhdh/kubernetes-rbac.yaml
   - rhdh/backstage.yaml
   - rhdh/dynamic-plugins-root.yaml
 

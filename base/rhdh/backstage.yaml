@@ -11,6 +11,11 @@ spec:
       spec:
         template:
           spec:
+            # Identity for the Kubernetes plugin (base/rhdh/kubernetes-rbac.yaml).
+            # The operator defaults automountServiceAccountToken to false, which
+            # leaves the pod without the token and CA the plugin reads.
+            serviceAccountName: rhdh-kubernetes
+            automountServiceAccountToken: true
             volumes:
               - $patch: replace
                 name: dynamic-plugins-root

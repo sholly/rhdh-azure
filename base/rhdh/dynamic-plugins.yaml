@@ -9,6 +9,38 @@ plugins:
     disabled: false
 
   # ---------------------------------------------------------------------------
+  # Kubernetes
+  # Both packages ship preinstalled in the RHDH image (and are listed, disabled,
+  # in dynamic-plugins.default.yaml), so the local dist path is enough -- no OCI
+  # artifact needed. Cluster connection settings live in app-config
+  # (kubernetes.clusterLocatorMethods).
+  # ---------------------------------------------------------------------------
+
+  # Reads workloads from the cluster for the entity Kubernetes tab.
+  - package: ./dynamic-plugins/dist/backstage-plugin-kubernetes-backend-dynamic
+    disabled: false
+
+  # Kubernetes tab on entity pages. The tab itself is already part of the RHDH
+  # entity page; it only renders once something is mounted into its cards slot.
+  - package: ./dynamic-plugins/dist/backstage-plugin-kubernetes
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          backstage.plugin-kubernetes:
+            mountPoints:
+              - mountPoint: entity.page.kubernetes/cards
+                importName: EntityKubernetesContent
+                config:
+                  layout:
+                    gridColumn: 1 / -1
+                  if:
+                    allOf:
+                      # Entity needs backstage.io/kubernetes-id (or
+                      # backstage.io/kubernetes-namespace / -label-selector).
+                      - isKubernetesAvailable
+
+  # ---------------------------------------------------------------------------
   # Azure DevOps
   # Plain npm package names (e.g. @backstage-community/plugin-azure-devops) do
   # not work here: they are not dynamic-plugin builds and the installer rejects

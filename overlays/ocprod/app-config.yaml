@@ -109,3 +109,44 @@ integrations:
 azureDevOps:
   host: dev.azure.com
   organization: ${AZURE_DEVOPS_ORG}
+
+# ---------------------------------------------------------------------------
+# Kubernetes — the OpenShift cluster this instance runs on
+#
+# authProvider: serviceAccount with no serviceAccountToken puts the backend in
+# in-cluster mode: it takes the API server address and CA from the pod
+# environment and re-reads the projected token
+# (/var/run/secrets/kubernetes.io/serviceaccount/token) on every request, so
+# nothing expires. The pod gets that token because the Backstage CR runs it as
+# the rhdh-kubernetes ServiceAccount with automountServiceAccountToken: true;
+# permissions come from the rhdh-kubernetes-reader ClusterRole
+# (base/rhdh/kubernetes-rbac.yaml).
+#
+# `url` and `caFile` below are what in-cluster mode derives anyway; they are
+# kept explicit because the config schema requires a url, and they are what a
+# non-in-cluster setup would need.
+#
+# A Component only shows the Kubernetes tab once it carries
+#   metadata.annotations:
+#     backstage.io/kubernetes-id: <value of the backstage.io/kubernetes-id label
+#                                 on its workloads>
+# or backstage.io/kubernetes-namespace / backstage.io/kubernetes-label-selector.
+# ---------------------------------------------------------------------------
+kubernetes:
+  serviceLocatorMethod:
+    # Query every configured cluster and filter by the entity's annotations.
+    type: multiTenant
+  clusterLocatorMethods:
+    - type: config
+      clusters:
+        - name: ocprod
+          title: OpenShift (ocprod)
+          url: https://kubernetes.default.svc
+          authProvider: serviceAccount
+          skipTLSVerify: false
+          # Needs metrics.k8s.io read access (granted); set true to skip.
+          skipMetricsLookup: false
+          caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          # "Open dashboard" links on the Kubernetes tab point at the console.
+          dashboardApp: openshift
+          dashboardUrl: https://console-openshift-console.apps.ocprod.303.tube

@@ -6,6 +6,8 @@ A Red Hat Developer Hub instance (Backstage CR) at
 - Sign-in through **Microsoft Entra ID** (built-in `microsoft` auth provider)
 - Entra users/groups imported into the catalog by the **MS Graph** dynamic plugin
 - A **dedicated PostgreSQL 16** StatefulSet (operator-managed local DB disabled)
+- The **Kubernetes** plugin wired to the OpenShift cluster that hosts the
+  instance, authenticating as its own in-cluster ServiceAccount
 - Everything deployable by **ArgoCD** from Kustomize directories
 
 **Prerequisite:** the Red Hat Developer Hub Operator (1.7 or later) is already
@@ -19,6 +21,7 @@ installed on the cluster. This repo only creates the instance, not the operator.
 │   ├── postgres/               # StatefulSet + Services (PVC 10Gi)
 │   └── rhdh/
 │       ├── backstage.yaml      # Backstage CR (rhdh.redhat.com/v1alpha4)
+│       ├── kubernetes-rbac.yaml # SA + read-only ClusterRole for the K8s plugin
 │       └── dynamic-plugins.yaml
 └── overlays/ocprod/
     ├── kustomization.yaml      # namespace, route host patch
@@ -26,7 +29,8 @@ installed on the cluster. This repo only creates the instance, not the operator.
     └── secrets/*.example.yaml  # templates only (git-ignored for real values)
 ```
 
-Sync order: namespace (-1) → PostgreSQL (0) → Backstage CR (2).
+Sync order: namespace (-1) → PostgreSQL (0) → ServiceAccount/RBAC (1) →
+Backstage CR (2).
 
 ---
 
@@ -100,11 +104,83 @@ namespace and `backstages.rhdh.redhat.com`. The namespace is labelled
 `argocd.argoproj.io/managed-by=openshift-gitops`; if your controller still
 can't manage `Backstage` resources, grant its ServiceAccount a role for them.
 
-## 4. Verify
+## 4. Kubernetes plugin
+
+`plugin-kubernetes` (frontend) and `plugin-kubernetes-backend` are both
+preinstalled in the RHDH image and listed, disabled, in the catalog index's
+`dynamic-plugins.default.yaml`; `base/rhdh/dynamic-plugins.yaml` enables them by
+their local dist paths and mounts `EntityKubernetesContent` into
+`entity.page.kubernetes/cards`. No OCI artifact is needed, unlike the Azure
+DevOps plugins.
+
+Nothing else is required to reach the hosting cluster — no kubeconfig, no API
+URL, no token to create or rotate:
+
+- `base/rhdh/kubernetes-rbac.yaml` creates the `rhdh-kubernetes` ServiceAccount
+  and binds it to the read-only `rhdh-kubernetes-reader` ClusterRole (workloads,
+  routes, pod logs, pod metrics — cluster-wide, because the `multiTenant`
+  service locator searches every namespace).
+- The Backstage CR patches the Deployment to run as that ServiceAccount with
+  `automountServiceAccountToken: true`. The operator leaves automount off by
+  default, which is why the patch is needed.
+- `app-config.yaml` sets `authProvider: serviceAccount` and **no**
+  `serviceAccountToken`. That is the backend's in-cluster mode: it takes the API
+  server and CA from the pod environment and re-reads
+  `/var/run/secrets/kubernetes.io/serviceaccount/token` per request, so rotation
+  of the projected token is handled for free.
+
+The ClusterRole is cluster-scoped: a second Developer Hub instance on the same
+cluster must reuse it (adding its ServiceAccount as a subject) or use its own
+name.
+
+### Making the tab appear on an entity
+
+The tab renders only for entities that declare which workloads are theirs:
+
+```yaml
+metadata:
+  annotations:
+    backstage.io/kubernetes-id: my-service        # matches the label below
+    # or: backstage.io/kubernetes-namespace: my-namespace
+    # or: backstage.io/kubernetes-label-selector: app=my-service,env=prod
+```
+
+with workloads labelled to match:
+
+```bash
+oc -n my-namespace label deployment/my-service \
+  backstage.io/kubernetes-id=my-service
+```
+
+### Other clusters
+
+To add a remote cluster, append another entry under
+`kubernetes.clusterLocatorMethods[0].clusters`. In-cluster mode does not apply
+there, so it needs an explicit `url`, a `serviceAccountToken` (from a Secret via
+`extraEnvs`, e.g. `${K8S_TOKEN_DEV}`) and `caData`.
+
+## 5. Verify
 
 ```bash
 oc -n rhdh-azure get backstage,statefulset,pods,route
-oc -n rhdh-azure logs deploy/backstage-developer-hub -c backstage-backend | grep -i -E "msgraph|microsoft|error"
+oc -n rhdh-azure logs deploy/backstage-developer-hub-azure -c backstage-backend \
+  | grep -i -E "msgraph|microsoft|error"
+```
+
+Kubernetes plugin:
+
+```bash
+# Pod runs as the ServiceAccount, with its token mounted
+oc -n rhdh-azure get deploy/backstage-developer-hub-azure \
+  -o jsonpath='{.spec.template.spec.serviceAccountName}{"\n"}'
+
+# That ServiceAccount really can read workloads cluster-wide
+oc auth can-i list deployments -A \
+  --as=system:serviceaccount:rhdh-azure:rhdh-kubernetes
+
+# Clusters the backend resolved from app-config
+oc -n rhdh-azure logs deploy/backstage-developer-hub-azure -c backstage-backend \
+  | grep -i -E "kubernetes|cluster"
 ```
 
 Open https://rhdhazure.apps.ocprod.303.tube and choose **Sign in using Microsoft**.
@@ -122,6 +198,8 @@ and the resolvers match on Entra object ID, then email, then UPN local part.
 | Which users/groups are imported | `catalog.providers.microsoftGraphOrg.default.user/group.filter` |
 | DB size / storage class | `base/postgres/statefulset.yaml` → `volumeClaimTemplates` |
 | More plugins | `base/rhdh/dynamic-plugins.yaml` |
+| Kubernetes clusters / console link | `app-config.yaml` → `kubernetes.clusterLocatorMethods` |
+| What the Kubernetes plugin may read | `base/rhdh/kubernetes-rbac.yaml` → ClusterRole rules |
 | RBAC | Enable the `permission` block + an RBAC policy ConfigMap; Entra groups appear as `group:default/<name>` |
 | Another environment | Copy `overlays/ocprod` to a new overlay and change host/app-config |
 

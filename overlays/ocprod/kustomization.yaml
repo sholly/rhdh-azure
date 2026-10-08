@@ -24,7 +24,7 @@ patches:
   - target:
       group: rhdh.redhat.com
       kind: Backstage
-      name: developer-hub
+      name: developer-hub-azure
     patch: |-
       - op: replace
         path: /spec/application/route/host
