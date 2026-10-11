@@ -84,3 +84,8 @@ plugins:
                   if:
                     allOf:
                       - isAzureDevOpsAvailable
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-azure-dynamic
+    disabled: false
+
+  - package: ./dynamic-plugins/dist/roadiehq-scaffolder-backend-argocd-dynamic
+    disabled: false
