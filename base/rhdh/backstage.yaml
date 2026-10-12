@@ -28,6 +28,17 @@ spec:
         - name: rhdh-app-config
     dynamicPluginsConfigMapName: rhdh-dynamic-plugins
     extraEnvs:
+      envs:
+        # The Kubernetes plugin talks to the kube-apiserver over the internal
+        # service network, where the serving certificate is issued by the
+        # cluster's own CA. Node only trusts its built-in public CA bundle, so
+        # without this the plugin fails with
+        #   FETCH_ERROR ... self-signed certificate in certificate chain
+        # This adds the cluster CA (same bundle the ServiceAccount mount
+        # provides) to Node's trust store for the whole backend process, so
+        # certificates stay verified rather than skipped.
+        - name: NODE_EXTRA_CA_CERTS
+          value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       secrets:
         # BACKEND_SECRET, AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
         - name: rhdh-azure-secrets

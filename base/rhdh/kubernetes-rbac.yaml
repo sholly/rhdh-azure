@@ -4,8 +4,10 @@
 # The plugin is configured with authProvider: serviceAccount and no
 # serviceAccountToken (see app-config.yaml). In that mode the backend reads the
 # projected token from /var/run/secrets/kubernetes.io/serviceaccount/token on
-# every request and discovers the API server and its CA from the pod
-# environment -- so there is no token to create, mount or rotate by hand.
+# every request and discovers the API server from the pod environment -- so
+# there is no token to create, mount or rotate by hand. The CA in this mount is
+# not picked up from app-config in that mode; the Backstage CR points
+# NODE_EXTRA_CA_CERTS at it so Node trusts the API server certificate.
 #
 # The Backstage CR patches the Deployment to use this ServiceAccount and to set
 # automountServiceAccountToken: true (the operator leaves it false by default).
