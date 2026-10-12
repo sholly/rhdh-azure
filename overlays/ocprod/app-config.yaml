@@ -143,10 +143,6 @@ kubernetes:
           title: OpenShift (ocprod)
           url: https://kubernetes.default.svc
           authProvider: serviceAccount
-          skipTLSVerify: false
-          # Needs metrics.k8s.io read access (granted); set true to skip.
           skipMetricsLookup: false
+          serviceAccountToken: ${K8S_SA_TOKEN}
           caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          # "Open dashboard" links on the Kubernetes tab point at the console.
-          dashboardApp: openshift
-          dashboardUrl: https://console-openshift-console.apps.ocprod.303.tube
